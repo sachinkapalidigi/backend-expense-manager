@@ -1,12 +1,25 @@
 package categories
 
+import (
+	"strings"
+
+	"github.com/sachinkapalidigi/backend-expense-manager/utils/errors"
+)
+
+// Category : category of expense
 type Category struct {
-	Id           int64  `json:"id"`
+	ID           int64  `json:"id"`
 	CategoryName string `json:"category_name"`
-	Description  string `json:"Description"`
+	Description  string `json:"description"`
 	CreatedAt    string `json:"created_at"`
 }
 
-func (c Category) Validate() {
+// Validate : validate category
+func (c *Category) Validate() *errors.RestErr {
+	c.CategoryName = strings.TrimSpace(c.CategoryName)
+	if c.CategoryName == "" {
+		return errors.NewBadRequestError("Invalid category name")
+	}
 
+	return nil
 }

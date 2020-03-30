@@ -29,7 +29,7 @@ var (
 )
 
 func init() {
-	dbSourceName := fmt.Sprintf("host=%s port=%s user=%s "+"password=%s dbname=%s sslmode=disable", host, port, username, password, schema)
+	dbSourceName := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable", host, port, username, password, schema)
 
 	var err error
 
