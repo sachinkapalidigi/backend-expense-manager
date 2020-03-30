@@ -2,6 +2,7 @@ package categoriescontroller
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/sachinkapalidigi/backend-expense-manager/services"
 
@@ -29,8 +30,19 @@ func Create(c *gin.Context) {
 }
 
 func Get(c *gin.Context) {
+	categoryId, err := strconv.ParseInt(c.Param("category_id"), 10, 64)
+	if err != nil {
+		restErr := errors.NewBadRequestError("Category Id must be an integer")
+		c.JSON(restErr.Status, restErr)
+	}
 
-	c.JSON(http.StatusOK, map[string]string{"message": "Not implemented"})
+	result, getErr := services.CategoriesService.GetCategory(categoryId)
+	if getErr != nil {
+		c.JSON(getErr.Status, getErr)
+		return
+	}
+
+	c.JSON(http.StatusOK, result)
 }
 
 func GetAll(c *gin.Context) {

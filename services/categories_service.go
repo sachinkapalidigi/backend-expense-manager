@@ -15,6 +15,7 @@ type categoriesService struct{}
 
 type categoriesServiceInterface interface {
 	CreateCategory(categories.Category) (*categories.Category, *errors.RestErr)
+	GetCategory(int64) (*categories.Category, *errors.RestErr)
 }
 
 func (s *categoriesService) CreateCategory(category categories.Category) (*categories.Category, *errors.RestErr) {
@@ -29,4 +30,15 @@ func (s *categoriesService) CreateCategory(category categories.Category) (*categ
 	}
 	// return created category
 	return &category, nil
+}
+
+func (s *categoriesService) GetCategory(categoryId int64) (*categories.Category, *errors.RestErr) {
+
+	result := categories.Category{ID: categoryId}
+
+	if err := result.Get(); err != nil {
+		return nil, err
+	}
+
+	return &result, nil
 }
