@@ -45,7 +45,12 @@ func Get(c *gin.Context) {
 	c.JSON(http.StatusOK, result)
 }
 
+// GetAll : Get all the categories
 func GetAll(c *gin.Context) {
-
-	c.JSON(http.StatusOK, map[string]string{"message": "Not implemented"})
+	results, err := services.CategoriesService.GetAllCategories()
+	if err != nil {
+		c.JSON(err.Status, err)
+		return
+	}
+	c.JSON(http.StatusOK, results)
 }

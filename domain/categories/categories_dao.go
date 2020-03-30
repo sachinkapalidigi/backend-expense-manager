@@ -11,7 +11,8 @@ import (
 
 const (
 	queryCreateCategory     = "INSERT INTO categories(category_name, description, created_at) VALUES($1, $2, $3) RETURNING id;"
-	querySelectCategoryById = "SELECT id, category_name, description, created_at FROM categories WHERE id=$1;"
+	querySelectCategoryByID = "SELECT id, category_name, description, created_at FROM categories WHERE id=$1;"
+	querySelectCategories   = "SELECT id, category_name, description, created_at FROM categories"
 )
 
 // Create : Add category to database
@@ -40,7 +41,7 @@ func (category *Category) Create() *errors.RestErr {
 
 // Get : Get category based on user id
 func (category *Category) Get() *errors.RestErr {
-	stmt, err := expensesdb.Client.Prepare(querySelectCategoryById)
+	stmt, err := expensesdb.Client.Prepare(querySelectCategoryByID)
 
 	if err != nil {
 		logger.Error("Error in preparing statement", err)
@@ -57,4 +58,35 @@ func (category *Category) Get() *errors.RestErr {
 	}
 
 	return nil
+}
+
+// GetAll : Get all the categories
+func (category *Category) GetAll() (Categories, *errors.RestErr) {
+	stmt, err := expensesdb.Client.Prepare(querySelectCategories)
+	if err != nil {
+		logger.Error("problem with statement", err)
+		return nil, errors.NewInternalServerError("Could not fetch categories")
+	}
+	defer stmt.Close()
+
+	rows, err := stmt.Query()
+	if err != nil {
+		return nil, errors.NewInternalServerError("Could not fetch categories")
+	}
+	defer rows.Close()
+
+	results := make(Categories, 0)
+	for rows.Next() {
+		var category Category
+		if err := rows.Scan(&category.ID, &category.CategoryName, &category.Description, &category.CreatedAt); err != nil {
+			return nil, errors.NewInternalServerError("parse error")
+		}
+		results = append(results, category)
+	}
+
+	if len(results) == 0 {
+		return nil, errors.NewNotFoundError("No categories added")
+	}
+
+	return results, nil
 }

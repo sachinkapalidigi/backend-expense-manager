@@ -14,6 +14,9 @@ type Category struct {
 	CreatedAt    string `json:"created_at"`
 }
 
+// Categories : Slice of categories
+type Categories []Category
+
 // Validate : validate category
 func (c *Category) Validate() *errors.RestErr {
 	c.CategoryName = strings.TrimSpace(c.CategoryName)
