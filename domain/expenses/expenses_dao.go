@@ -13,7 +13,7 @@ import (
 const (
 	queryInsertExpense                          = "INSERT INTO expenses(category_id, amount, description, created_at, payment_mode) VALUES($1, $2, $3, $4, $5) RETURNING id;"
 	querySelectExpenseById                      = "SELECT expenses.id, expenses.category_id, expenses.amount, expenses.description, expenses.created_at, expenses.payment_mode, categories.id, categories.category_name, categories.description, categories.created_at FROM expenses INNER JOIN categories ON expenses.category_id = categories.id WHERE expenses.id=$1;"
-	querySelectExpensesByCategoryIdBetweenDates = "SELECT expenses.id, expenses.category_id, expenses.amount, expenses.description, expenses.created_at, expenses.payment_mode, categories.id, categories.category_name, categories.description, categories.created_at FROM expenses INNER JOIN categories ON expenses.category_id = categories.id WHERE categories.id=$1 AND expenses.created_at BETWEEN $1 AND $2 ORDER BY expenses.created_at DESC;"
+	querySelectExpensesByCategoryIdBetweenDates = "SELECT expenses.id, expenses.category_id, expenses.amount, expenses.description, expenses.created_at, expenses.payment_mode, categories.id, categories.category_name, categories.description, categories.created_at FROM expenses INNER JOIN categories ON expenses.category_id = categories.id WHERE categories.id=$1 AND expenses.created_at BETWEEN $2 AND $3 ORDER BY expenses.created_at DESC;"
 	querySelectExpensesBetweenDates             = "SELECT expenses.id, expenses.category_id, expenses.amount, expenses.description, expenses.created_at, expenses.payment_mode, categories.id, categories.category_name, categories.description, categories.created_at FROM expenses INNER JOIN categories ON expenses.category_id = categories.id WHERE expenses.created_at BETWEEN $1 AND $2 ORDER BY expenses.created_at DESC;"
 )
 
@@ -67,6 +67,7 @@ func (expense *Expense) GetAll() ([]ExpenseCategory, *errors.RestErr) {
 
 // GetAllByDetails : based on category id and dates in between gives slice of Expenses
 func (e *Expense) GetAllByDetails(categoryId int64, from string, to string) ([]ExpenseCategory, *errors.RestErr) {
+
 	if categoryId != 0 {
 		stmt, err := expensesdb.Client.Prepare(querySelectExpensesByCategoryIdBetweenDates)
 		if err != nil {
@@ -80,34 +81,56 @@ func (e *Expense) GetAllByDetails(categoryId int64, from string, to string) ([]E
 			return nil, errors.NewInternalServerError("Couldnot get expense")
 		}
 		defer rows.Close()
-	}
-	stmt, err := expensesdb.Client.Prepare(querySelectExpensesBetweenDates)
-	if err != nil {
-		logger.Error("Error in statement", err)
-		return nil, errors.NewInternalServerError("Couldnot get expense")
-	}
-	defer stmt.Close()
-	rows, err := stmt.Query(from, to)
-	if err != nil {
-		logger.Error("Error in statement", err)
-		return nil, errors.NewInternalServerError("Couldnot get expense")
-	}
-	defer rows.Close()
+		var expenses []ExpenseCategory
 
-	var expenses []ExpenseCategory
-
-	for rows.Next() {
-		var expense Expense
-		var category categories.Category
-		if err := rows.Scan(&expense.ID, &expense.CategoryID, &expense.Amount, &expense.Description, &expense.CreatedAt, &expense.PaymentMode, &category.ID, &category.CategoryName, &category.Description, &category.CreatedAt); err != nil {
-			return nil, errors.NewInternalServerError("Parse Error")
+		for rows.Next() {
+			var expense Expense
+			var category categories.Category
+			if err := rows.Scan(&expense.ID, &expense.CategoryID, &expense.Amount, &expense.Description, &expense.CreatedAt, &expense.PaymentMode, &category.ID, &category.CategoryName, &category.Description, &category.CreatedAt); err != nil {
+				return nil, errors.NewInternalServerError("Parse Error")
+			}
+			var expenseCategory = ExpenseCategory{
+				Expense:  expense,
+				Category: category,
+			}
+			expenses = append(expenses, expenseCategory)
 		}
-		var expenseCategory = ExpenseCategory{
-			Expense:  expense,
-			Category: category,
+		if len(expenses) == 0 {
+			return nil, errors.NewNotFoundError("No expenses for the given category")
 		}
-		expenses = append(expenses, expenseCategory)
+
+		return expenses, nil
+	} else {
+		stmt, err := expensesdb.Client.Prepare(querySelectExpensesBetweenDates)
+		if err != nil {
+			logger.Error("Error in statement", err)
+			return nil, errors.NewInternalServerError("Couldnot get expense")
+		}
+		defer stmt.Close()
+		rows, err := stmt.Query(from, to)
+		if err != nil {
+			logger.Error("Error in statement", err)
+			return nil, errors.NewInternalServerError("Couldnot get expense")
+		}
+		defer rows.Close()
+		var expenses []ExpenseCategory
+
+		for rows.Next() {
+			var expense Expense
+			var category categories.Category
+			if err := rows.Scan(&expense.ID, &expense.CategoryID, &expense.Amount, &expense.Description, &expense.CreatedAt, &expense.PaymentMode, &category.ID, &category.CategoryName, &category.Description, &category.CreatedAt); err != nil {
+				return nil, errors.NewInternalServerError("Parse Error")
+			}
+			var expenseCategory = ExpenseCategory{
+				Expense:  expense,
+				Category: category,
+			}
+			expenses = append(expenses, expenseCategory)
+		}
+		if len(expenses) == 0 {
+			return nil, errors.NewNotFoundError("No expenses for the given category")
+		}
+		return expenses, nil
 	}
 
-	return expenses, nil
 }

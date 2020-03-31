@@ -1,6 +1,7 @@
 package expensescontroller
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -64,6 +65,7 @@ func GetAll(c *gin.Context) {
 			return
 		}
 	}
+	fmt.Println(categoryID)
 	from := strings.TrimSpace(c.Query("from"))
 	to := strings.TrimSpace(c.Query("to"))
 	if from == "" {
