@@ -12,6 +12,8 @@ var (
 
 type expensesServiceInterface interface {
 	AddExpense(expenses.Expense) (*expenses.Expense, *errors.RestErr)
+	GetExpense(int64) (*expenses.ExpenseCategory, *errors.RestErr)
+	GetExpenses(int64, string, string) ([]expenses.ExpenseCategory, *errors.RestErr)
 }
 
 type expensesService struct{}
@@ -26,4 +28,18 @@ func (s *expensesService) AddExpense(expense expenses.Expense) (*expenses.Expens
 	}
 
 	return &expense, nil
+}
+
+func (s *expensesService) GetExpense(expenseID int64) (*expenses.ExpenseCategory, *errors.RestErr) {
+	var expense = expenses.Expense{ID: expenseID}
+	result, err := expense.GetExpenseDetails()
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+func (s *expensesService) GetExpenses(categoryId int64, from string, to string) ([]expenses.ExpenseCategory, *errors.RestErr) {
+	var expense expenses.Expense
+	return expense.GetAllByDetails(categoryId, from, to)
 }

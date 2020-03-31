@@ -19,8 +19,8 @@ type Expense struct {
 
 // ExpenseCategory : structure for expense with category
 type ExpenseCategory struct {
-	Expense  Expense
-	Category categories.Category
+	Expense  Expense             `json:"expense"`
+	Category categories.Category `json:"category"`
 }
 
 // Expenses : structure for expenses
