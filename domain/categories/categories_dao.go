@@ -32,6 +32,9 @@ func (category *Category) Create() *errors.RestErr {
 	err = stmt.QueryRow(&category.CategoryName, &category.Description, &category.CreatedAt).Scan(&category.ID)
 	if err != nil {
 		logger.Error("Error in saving to database", err)
+		if strings.Contains(err.Error(), "duplicate key value") {
+			return errors.NewBadRequestError("Category already exists")
+		}
 		restErr := errors.NewInternalServerError("Category could not be saved")
 		return restErr
 	}
