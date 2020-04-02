@@ -1,0 +1,4 @@
+alter table expenses add constraint users_user_id_fkey foreign key(user_id) references users(id);
+alter table expenses add constraint users_user_id_fkey foreign key(user_id) references users(id);
+"SELECT expenses.id, expenses.category_id, expenses.amount, expenses.description, expenses.created_at, expenses.payment_mode, categories.id, categories.category_name, categories.description, categories.created_at FROM expenses INNER JOIN categories ON expenses.category_id = categories.id WHERE categories.id=$1 AND expenses.created_at BETWEEN $2 AND $3 ORDER BY expenses.created_at DESC;"
+"SELECT expenses.id, expenses.category_id, expenses.amount, expenses.description, expenses.created_at, expenses.payment_mode, categories.id, categories.category_name, categories.description, categories.created_at FROM expenses INNER JOIN categories ON expenses.category_id = categories.id WHERE expenses.created_at BETWEEN $1 AND $2 ORDER BY expenses.created_at DESC;"

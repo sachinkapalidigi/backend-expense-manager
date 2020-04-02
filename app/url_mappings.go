@@ -3,6 +3,8 @@ package app
 import (
 	"net/http"
 
+	"github.com/sachinkapalidigi/backend-expense-manager/controllers/userscontroller"
+
 	"github.com/sachinkapalidigi/backend-expense-manager/controllers/expensescontroller"
 
 	"github.com/sachinkapalidigi/backend-expense-manager/controllers/categoriescontroller"
@@ -25,4 +27,6 @@ func mapUrls() {
 	router.POST("/expenses", expensescontroller.Create)
 	router.GET("/expenses/:expense_id", expensescontroller.Get)
 	router.GET("/expenses", expensescontroller.GetAll)
+
+	router.POST("/register", userscontroller.RegisterUser)
 }

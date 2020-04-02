@@ -6,4 +6,5 @@ require (
 	github.com/gin-gonic/gin v1.6.2
 	github.com/lib/pq v1.3.0
 	go.uber.org/zap v1.14.1
+	gopkg.in/go-playground/validator.v9 v9.31.0
 )
