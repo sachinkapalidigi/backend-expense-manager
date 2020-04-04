@@ -3,6 +3,8 @@ package app
 import (
 	"net/http"
 
+	"github.com/sachinkapalidigi/backend-expense-manager/middlewares"
+
 	"github.com/sachinkapalidigi/backend-expense-manager/controllers/userscontroller"
 
 	"github.com/sachinkapalidigi/backend-expense-manager/controllers/expensescontroller"
@@ -26,7 +28,8 @@ func mapUrls() {
 
 	router.POST("/expenses", expensescontroller.Create)
 	router.GET("/expenses/:expense_id", expensescontroller.Get)
-	router.GET("/expenses", expensescontroller.GetAll)
+	router.GET("/expenses", middlewares.AuthMiddleware.EnforceAuthenticatedMiddleware(), expensescontroller.GetAll)
 
 	router.POST("/register", userscontroller.RegisterUser)
+	router.POST("login", userscontroller.LoginUser)
 }

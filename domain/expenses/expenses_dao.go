@@ -11,21 +11,21 @@ import (
 )
 
 const (
-	queryInsertExpense                          = "INSERT INTO expenses(category_id, amount, description, created_at, payment_mode) VALUES($1, $2, $3, $4, $5) RETURNING id;"
-	querySelectExpenseById                      = "SELECT expenses.id, expenses.category_id, expenses.amount, expenses.description, expenses.created_at, expenses.payment_mode, categories.id, categories.category_name, categories.description, categories.created_at FROM expenses INNER JOIN categories ON expenses.category_id = categories.id WHERE expenses.id=$1;"
-	querySelectExpensesByCategoryIdBetweenDates = "SELECT expenses.id, expenses.category_id, expenses.amount, expenses.description, expenses.created_at, expenses.payment_mode, categories.id, categories.category_name, categories.description, categories.created_at FROM expenses INNER JOIN categories ON expenses.category_id = categories.id WHERE categories.id=$1 AND expenses.created_at BETWEEN $2 AND $3 ORDER BY expenses.created_at DESC;"
-	querySelectExpensesBetweenDates             = "SELECT expenses.id, expenses.category_id, expenses.amount, expenses.description, expenses.created_at, expenses.payment_mode, categories.id, categories.category_name, categories.description, categories.created_at FROM expenses INNER JOIN categories ON expenses.category_id = categories.id WHERE expenses.created_at BETWEEN $1 AND $2 ORDER BY expenses.created_at DESC;"
+	queryInsertExpense                          = "INSERT INTO expenses(category_id, amount, description, created_at, payment_mode, user_id) VALUES($1, $2, $3, $4, $5, $6) RETURNING id;"
+	querySelectExpenseById                      = "SELECT expenses.id, expenses.category_id, expenses.amount, expenses.description, expenses.created_at, expenses.payment_mode, categories.id, categories.category_name, categories.description, categories.created_at FROM expenses INNER JOIN categories ON expenses.category_id = categories.id WHERE expenses.id=$1 AND user_id=$2;"
+	querySelectExpensesByCategoryIdBetweenDates = "SELECT expenses.id, expenses.category_id, expenses.amount, expenses.description, expenses.created_at, expenses.payment_mode, categories.id, categories.category_name, categories.description, categories.created_at FROM expenses INNER JOIN categories ON expenses.category_id = categories.id WHERE categories.id=$1 AND expenses.created_at BETWEEN $2 AND $3 AND expenses.user_id=$4 ORDER BY expenses.created_at DESC;"
+	querySelectExpensesBetweenDates             = "SELECT expenses.id, expenses.category_id, expenses.amount, expenses.description, expenses.created_at, expenses.payment_mode, categories.id, categories.category_name, categories.description, categories.created_at FROM expenses INNER JOIN categories ON expenses.category_id = categories.id WHERE expenses.created_at BETWEEN $1 AND $2 AND expenses.user_id=$4 ORDER BY expenses.created_at DESC;"
 )
 
 // AddExpense : Save to database
-func (expense *Expense) AddExpense() *errors.RestErr {
+func (expense *Expense) AddExpense(userID int64) *errors.RestErr {
 	stmt, err := expensesdb.Client.Prepare(queryInsertExpense)
 	if err != nil {
 		logger.Error("Error in statement", err)
 		return errors.NewInternalServerError("Couldnot save expense")
 	}
 	defer stmt.Close()
-	if err := stmt.QueryRow(&expense.CategoryID, &expense.Amount, &expense.Description, &expense.CreatedAt, &expense.PaymentMode).Scan(&expense.ID); err != nil {
+	if err := stmt.QueryRow(&expense.CategoryID, &expense.Amount, &expense.Description, &expense.CreatedAt, &expense.PaymentMode, userID).Scan(&expense.ID); err != nil {
 		logger.Error("expense couldnot be created", err)
 		if strings.Contains(err.Error(), "violates foreign key constraint") {
 			return errors.NewBadRequestError("Invalid Category")
@@ -36,7 +36,7 @@ func (expense *Expense) AddExpense() *errors.RestErr {
 }
 
 // GetExpenseDetails : get the expensedetails from expense id
-func (expense *Expense) GetExpenseDetails() (*ExpenseCategory, *errors.RestErr) {
+func (expense *Expense) GetExpenseDetails(userID int64) (*ExpenseCategory, *errors.RestErr) {
 	stmt, err := expensesdb.Client.Prepare(querySelectExpenseById)
 	if err != nil {
 		logger.Error("Error in statement", err)
@@ -46,7 +46,7 @@ func (expense *Expense) GetExpenseDetails() (*ExpenseCategory, *errors.RestErr) 
 	defer stmt.Close()
 
 	var category categories.Category
-	result := stmt.QueryRow(&expense.ID)
+	result := stmt.QueryRow(&expense.ID, userID)
 	if err := result.Scan(&expense.ID, &expense.CategoryID, &expense.Amount, &expense.Description, &expense.CreatedAt, &expense.PaymentMode, &category.ID, &category.CategoryName, &category.Description, &category.CreatedAt); err != nil {
 		if strings.Contains(err.Error(), "no rows") {
 			return nil, errors.NewNotFoundError("expenses not found")
@@ -60,13 +60,8 @@ func (expense *Expense) GetExpenseDetails() (*ExpenseCategory, *errors.RestErr) 
 	return &expenseCategory, nil
 }
 
-func (expense *Expense) GetAll() ([]ExpenseCategory, *errors.RestErr) {
-
-	return nil, nil
-}
-
 // GetAllByDetails : based on category id and dates in between gives slice of Expenses
-func (e *Expense) GetAllByDetails(categoryId int64, from string, to string) ([]ExpenseCategory, *errors.RestErr) {
+func (e *Expense) GetAllByDetails(categoryId int64, from string, to string, userID int64) ([]ExpenseCategory, *errors.RestErr) {
 
 	if categoryId != 0 {
 		stmt, err := expensesdb.Client.Prepare(querySelectExpensesByCategoryIdBetweenDates)
@@ -75,7 +70,7 @@ func (e *Expense) GetAllByDetails(categoryId int64, from string, to string) ([]E
 			return nil, errors.NewInternalServerError("Couldnot get expense")
 		}
 		defer stmt.Close()
-		rows, err := stmt.Query(categoryId, from, to)
+		rows, err := stmt.Query(categoryId, from, to, userID)
 		if err != nil {
 			logger.Error("Error in statement", err)
 			return nil, errors.NewInternalServerError("Couldnot get expense")
@@ -107,7 +102,7 @@ func (e *Expense) GetAllByDetails(categoryId int64, from string, to string) ([]E
 			return nil, errors.NewInternalServerError("Couldnot get expense")
 		}
 		defer stmt.Close()
-		rows, err := stmt.Query(from, to)
+		rows, err := stmt.Query(from, to, userID)
 		if err != nil {
 			logger.Error("Error in statement", err)
 			return nil, errors.NewInternalServerError("Couldnot get expense")

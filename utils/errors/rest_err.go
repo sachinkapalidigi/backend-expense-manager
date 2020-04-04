@@ -37,3 +37,12 @@ func NewInternalServerError(message string) *RestErr {
 		Error:   "internal_server_error",
 	}
 }
+
+// NewNotAuthorizedError : Invalid or no token
+func NewNotAuthorizedError(message string) *RestErr {
+	return &RestErr{
+		Message: message,
+		Status:  http.StatusUnauthorized,
+		Error:   "not_authorized",
+	}
+}

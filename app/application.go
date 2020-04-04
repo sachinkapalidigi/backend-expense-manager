@@ -3,6 +3,7 @@ package app
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/sachinkapalidigi/backend-expense-manager/logger"
+	"github.com/sachinkapalidigi/backend-expense-manager/middlewares"
 )
 
 var (
@@ -11,6 +12,8 @@ var (
 
 // StartApplication : starts go lang application
 func StartApplication() {
+
+	router.Use(middlewares.AuthMiddleware.UserLoader())
 	mapUrls()
 
 	// start logger

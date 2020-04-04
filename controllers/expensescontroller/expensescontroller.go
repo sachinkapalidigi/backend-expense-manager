@@ -10,6 +10,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/sachinkapalidigi/backend-expense-manager/domain/expenses"
+	"github.com/sachinkapalidigi/backend-expense-manager/domain/users"
 	"github.com/sachinkapalidigi/backend-expense-manager/services"
 	"github.com/sachinkapalidigi/backend-expense-manager/utils/errors"
 )
@@ -22,8 +23,13 @@ func Create(c *gin.Context) {
 		c.JSON(restErr.Status, restErr)
 		return
 	}
-
-	result, restErr := services.ExpensesService.AddExpense(expense)
+	user, exists := c.Get("currentUser")
+	if !exists {
+		restErr := errors.NewNotAuthorizedError("cannot Add expense, Login!")
+		c.JSON(restErr.Status, restErr)
+		return
+	}
+	result, restErr := services.ExpensesService.AddExpense(expense, user.(*users.User).ID)
 	if restErr != nil {
 		c.JSON(restErr.Status, restErr)
 		return
@@ -42,7 +48,13 @@ func Get(c *gin.Context) {
 		c.JSON(restErr.Status, restErr)
 		return
 	}
-	result, err := services.ExpensesService.GetExpense(expenseID)
+	user, exists := c.Get("currentUser")
+	if !exists {
+		restErr := errors.NewNotAuthorizedError("cannot get expense details, Login needed!")
+		c.JSON(restErr.Status, restErr)
+		return
+	}
+	result, err := services.ExpensesService.GetExpense(expenseID, user.(*users.User).ID)
 	if err != nil {
 		c.JSON(err.Status, err)
 		return
@@ -66,6 +78,7 @@ func GetAll(c *gin.Context) {
 		}
 	}
 	fmt.Println(categoryID)
+
 	from := strings.TrimSpace(c.Query("from"))
 	to := strings.TrimSpace(c.Query("to"))
 	if from == "" {
@@ -75,7 +88,14 @@ func GetAll(c *gin.Context) {
 		to = dateutil.GetNowDBFormat()
 	}
 
-	result, restErr := services.ExpensesService.GetExpenses(categoryID, from, to)
+	user, exists := c.Get("currentUser")
+	if !exists {
+		restErr := errors.NewNotAuthorizedError("cannot get expense, Login!")
+		c.JSON(restErr.Status, restErr)
+		return
+	}
+
+	result, restErr := services.ExpensesService.GetExpenses(categoryID, from, to, user.(*users.User).ID)
 	if restErr != nil {
 		c.JSON(restErr.Status, restErr)
 		return

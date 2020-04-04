@@ -14,12 +14,12 @@ var (
 type categoriesService struct{}
 
 type categoriesServiceInterface interface {
-	CreateCategory(categories.Category) (*categories.Category, *errors.RestErr)
-	GetCategory(int64) (*categories.Category, *errors.RestErr)
-	GetAllCategories() (categories.Categories, *errors.RestErr)
+	CreateCategory(categories.Category, int64) (*categories.Category, *errors.RestErr)
+	GetCategory(int64, int64) (*categories.Category, *errors.RestErr)
+	GetAllCategories(int64) (categories.Categories, *errors.RestErr)
 }
 
-func (s *categoriesService) CreateCategory(category categories.Category) (*categories.Category, *errors.RestErr) {
+func (s *categoriesService) CreateCategory(category categories.Category, userID int64) (*categories.Category, *errors.RestErr) {
 	// validate
 	if err := category.Validate(); err != nil {
 		return nil, err
@@ -33,7 +33,7 @@ func (s *categoriesService) CreateCategory(category categories.Category) (*categ
 	return &category, nil
 }
 
-func (s *categoriesService) GetCategory(categoryId int64) (*categories.Category, *errors.RestErr) {
+func (s *categoriesService) GetCategory(categoryId int64, userID int64) (*categories.Category, *errors.RestErr) {
 
 	result := categories.Category{ID: categoryId}
 
@@ -44,7 +44,7 @@ func (s *categoriesService) GetCategory(categoryId int64) (*categories.Category,
 	return &result, nil
 }
 
-func (s *categoriesService) GetAllCategories() (categories.Categories, *errors.RestErr) {
+func (s *categoriesService) GetAllCategories(userID int64) (categories.Categories, *errors.RestErr) {
 	c := categories.Category{}
 	return c.GetAll()
 }

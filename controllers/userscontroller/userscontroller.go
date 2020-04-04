@@ -30,3 +30,24 @@ func RegisterUser(c *gin.Context) {
 	})
 	return
 }
+
+// LoginUser : Login user based on email and password
+func LoginUser(c *gin.Context) {
+	// get email and password
+	var user *users.User
+	if err := c.BindJSON(&user); err != nil {
+		restErr := errors.NewBadRequestError("Invalid JSON body")
+		c.JSON(restErr.Status, restErr)
+		return
+	}
+	// service to verify
+	accessToken, restErr := services.UsersServices.Authenticate(user)
+	// generate token and send back
+	if restErr != nil {
+		c.JSON(restErr.Status, restErr)
+		return
+	}
+
+	c.JSON(http.StatusOK, accessToken)
+	return
+}
