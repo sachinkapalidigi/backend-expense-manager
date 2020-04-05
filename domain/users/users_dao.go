@@ -1,6 +1,8 @@
 package users
 
 import (
+	"strings"
+
 	"github.com/sachinkapalidigi/backend-expense-manager/datasources/postgresql/expensesdb"
 	"github.com/sachinkapalidigi/backend-expense-manager/logger"
 	"github.com/sachinkapalidigi/backend-expense-manager/utils/errors"
@@ -22,6 +24,9 @@ func (user *User) CreateUser() *errors.RestErr {
 
 	if err := stmt.QueryRow(&user.Name, &user.Email, &user.Password, &user.CreatedAt).Scan(&user.ID); err != nil {
 		logger.Error("Errors in saving / retrieving user id", err)
+		if strings.Contains(err.Error(), "violates unique constraint") {
+			return errors.NewBadRequestError("Email Already exists")
+		}
 		return errors.NewInternalServerError("Couldnot Save User")
 	}
 

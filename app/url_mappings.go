@@ -31,5 +31,5 @@ func mapUrls() {
 	router.GET("/expenses", middlewares.AuthMiddleware.EnforceAuthenticatedMiddleware(), expensescontroller.GetAll)
 
 	router.POST("/register", userscontroller.RegisterUser)
-	router.POST("login", userscontroller.LoginUser)
+	router.POST("/login", userscontroller.LoginUser)
 }
