@@ -71,5 +71,6 @@ func GetAll(c *gin.Context) {
 		c.JSON(err.Status, err)
 		return
 	}
-	c.JSON(http.StatusOK, results)
+	ct := map[string]categories.Categories{"categories": results}
+	c.JSON(http.StatusOK, ct)
 }
